@@ -1,0 +1,34 @@
+[project]
+name = "sales-assistant"
+version = "0.1.0"
+description = "Chinook sales assistant: a Deep Agent with specialists, skills, MCP mail, human approval and a LangSmith eval suite"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain>=1.4",
+    "langgraph>=1.2",
+    "deepagents>=0.7",
+    "langchain-openai",
+    "langchain-anthropic",
+    "langchain-mcp-adapters>=0.3",
+    "mcp>=1.24,<2",
+    "langgraph-cli[inmem]",
+    "langsmith[pytest]>=0.14",
+    "openevals>=0.2",
+    "matplotlib",
+    "python-dotenv",
+    "pytest",
+]
+
+[project.optional-dependencies]
+search = ["langchain-tavily"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["agent", "config", "middleware", "subagents"]
+packages = ["tools", "evals"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

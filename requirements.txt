@@ -1,0 +1,20 @@
+# LangChain OSS: create_agent + middleware (langchain), the Deep Agents harness (deepagents),
+# the durable runtime (langgraph). Install with: pip install -e .   (or -r requirements.txt)
+langchain>=1.4
+langgraph>=1.2
+deepagents>=0.7
+langchain-openai
+langchain-anthropic
+langchain-mcp-adapters>=0.3   # discovers the mail server's tools
+mcp>=1.24,<2                  # FastMCP for the fake mail server (adapters pin mcp<2)
+langgraph-cli[inmem]          # `langgraph dev` -> LangSmith Studio
+
+# Observability / evaluation
+langsmith[pytest]>=0.14
+openevals>=0.2
+pytest
+
+# Deliverables and utilities
+matplotlib
+python-dotenv
+# langchain-tavily            # optional: live web search for the genre-researcher
