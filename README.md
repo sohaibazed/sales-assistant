@@ -70,6 +70,17 @@ In Studio set the run context to `{"rep_id": 3}` (Jane Peacock; 4 = Margaret Par
 Deliverables land in `output/` (open them in a browser). `./start.sh --reset` wipes the ledger,
 Studio threads and anything the agent learned into `AGENTS.md`.
 
+**Agent Chat UI** ([agentchat.vercel.app](https://agentchat.vercel.app)) or any other client that
+can't set a run context: create one assistant per rep, each with a default context, and point
+the client at the assistant id instead of the graph name:
+
+```bash
+python scripts/create_assistants.py     # with ./start.sh running; prints three assistant ids
+```
+
+Deployment URL `http://localhost:2024`, Assistant / Graph ID = the id printed for Jane. Using
+the bare graph id `sales_assistant` fails closed (`PermissionError`: no rep signed in), by design.
+
 Prompts to try:
 
 - "What's waiting in the shared inbox?"

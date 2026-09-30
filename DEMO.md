@@ -262,6 +262,11 @@ production loop. Each step answers "how do you know?"
   (fork from a checkpoint, edit, re-run); the link from a Studio run to its LangSmith trace.
 - The async graph factory (`make_graph`) is why the mail tools appear without a restart if
   you start the mail server late; Studio re-loads the graph per run until discovery succeeds.
+- **Agent Chat UI** (agentchat.vercel.app) as a second front end: it has no context field, so run
+  `python scripts/create_assistants.py` and give it Jane's **assistant id** (graph `sales_assistant`,
+  URL `http://localhost:2024`). Talking point: *"one graph, three assistants; the assistant carries
+  the signed-in rep, the client never can."* Do approvals in Studio (or `scripts/chat.py`): Agent
+  Chat may not render the middleware's approve/edit/reject card.
 
 ### 2.5 Other features: what to add, and what to skip
 
