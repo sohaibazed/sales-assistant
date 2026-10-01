@@ -1,3 +1,6 @@
+CLAUDE.md
+DEMO.md
+prompts.md
 # Secrets
 .env
 
@@ -19,3 +22,4 @@ venv/
 
 # OS
 .DS_Store
+.dockerignore
