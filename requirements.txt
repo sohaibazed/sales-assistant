@@ -17,4 +17,5 @@ pytest
 # Deliverables and utilities
 matplotlib
 python-dotenv
+pyjwt>=2.8                    # signs login tokens (auth.py)
 # langchain-tavily            # optional: live web search for the genre-researcher

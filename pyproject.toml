@@ -16,6 +16,7 @@ dependencies = [
     "openevals>=0.2",
     "matplotlib",
     "python-dotenv",
+    "pyjwt>=2.8",
     "pytest",
 ]
 
@@ -27,7 +28,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["agent", "config", "middleware", "subagents"]
+py-modules = ["agent", "auth", "config", "middleware", "subagents", "webapp"]
 packages = ["tools", "evals"]
 
 [tool.pytest.ini_options]
