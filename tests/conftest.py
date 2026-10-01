@@ -21,6 +21,9 @@ os.environ.setdefault("OPENAI_API_KEY", "offline-test")
 os.environ["LANGSMITH_TRACING"] = "false"
 os.environ["MAIL_MCP_PORT"] = "8790"
 os.environ["MAIL_MCP_URL"] = "http://127.0.0.1:8790/mcp"
+# Login settings for auth.py / webapp.py tests (never the real .env values).
+os.environ["AUTH_SECRET"] = "offline-test-secret-offline-test-secret"
+os.environ["AUTH_USERS"] = "jane:jane-pw:3,margaret:margaret-pw:4,ghost:ghost-pw:999"
 
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel  # noqa: E402
 from langchain_core.messages import AIMessage  # noqa: E402
