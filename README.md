@@ -28,6 +28,9 @@ sales_assistant/
 ├── evals/              # LangSmith: golden dataset, evaluators, experiments, simulation, live tests
 ├── tests/              # offline tests with scripted models (no API keys, ~10s)
 ├── scripts/chat.py     # terminal chat with approval prompts (Studio fallback)
+├── auth.py             # login for the Agent Server: token check, each rep sees only their own threads
+├── webapp.py           # custom routes: /auth/login, /auth/me, and the chat UI at /app/
+├── ui/                 # web chat UI (fork of agent-chat-ui): login page + approve/edit/reject cards
 ├── langgraph.json      # tells `langgraph dev` which graph to serve (an async factory)
 ├── start.sh            # starts the mail server + langgraph dev
 └── DEMO.md             # the demo runbook: flow, LangSmith features, talk track
@@ -36,7 +39,7 @@ sales_assistant/
 ## Architecture
 
 ```
-sales rep (rep_id in the run context) ──▶ sales-assistant  (create_deep_agent, main model)
+sales rep (signs in; rep_id from the token) ──▶ sales-assistant  (create_deep_agent, main model)
    middleware: memory (AGENTS.md) ▸ rep context ▸ PII (cards masked) ▸ audit trail ▸ fallback ▸ call limits
    harness:    todos ▸ files (this repo, with permission rules) ▸ skills ▸ summarization ▸ human-in-the-loop
    tools:      write_html_report ▸ render_bar_chart ▸ pay_invoice ⏸ conditional ▸ issue_refund ⏸ ▸ send_email ⏸ (MCP)
@@ -48,7 +51,7 @@ sales rep (rep_id in the run context) ──▶ sales-assistant  (create_deep_ag
 
 Design decisions, one line each (details in the file headers):
 
-- **Identity is context, never a tool argument.** `rep_id` arrives in the run context (Studio: `{"rep_id": 3}`); `RepContextMiddleware` fails closed and adds a small dynamic prompt section.
+- **Identity comes from login, never from the conversation.** The chat UI signs in (`auth.py`); the server takes `rep_id` from the signed token and refuses a run that asks for another rep. Studio, evals and scripts set it in the run context (`{"rep_id": 3}`). `RepContextMiddleware` fails closed and adds a small dynamic prompt section.
 - **The repo is the agent's filesystem.** `AGENTS.md` and `skills/` are ordinary files; permission rules make secrets invisible (even to `ls`/`grep`), code and skills read-only, and only `/output/` and `/AGENTS.md` writable.
 - **Skills are versioned playbooks.** Only their names and descriptions sit in the prompt; the agent reads a `SKILL.md` when a request matches. A policy change is a pull request.
 - **Specialists isolate context and privilege.** Email (untrusted content) is read by the inbox-clerk and reported as data; the analyst can query but not pay; nothing side-effecting lives on a specialist.
@@ -61,8 +64,8 @@ Design decisions, one line each (details in the file headers):
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
-cp .env.example .env            # add OPENAI_API_KEY (or ANTHROPIC_API_KEY) and LANGSMITH_API_KEY
-pytest                          # 29 offline tests, no keys needed (~10s)
+cp .env.example .env            # add OPENAI_API_KEY (or ANTHROPIC_API_KEY), LANGSMITH_API_KEY, AUTH_SECRET
+pytest                          # 42 offline tests, no keys needed (~20s)
 ./start.sh                      # mail server + langgraph dev -> LangSmith Studio, graph "sales_assistant"
 ```
 
@@ -70,16 +73,33 @@ In Studio set the run context to `{"rep_id": 3}` (Jane Peacock; 4 = Margaret Par
 Deliverables land in `output/` (open them in a browser). `./start.sh --reset` wipes the ledger,
 Studio threads and anything the agent learned into `AGENTS.md`.
 
-**Agent Chat UI** ([agentchat.vercel.app](https://agentchat.vercel.app)) or any other client that
-can't set a run context: create one assistant per rep, each with a default context, and point
-the client at the assistant id instead of the graph name:
+**Chat UI** (`ui/`, a fork of [agent-chat-ui](https://github.com/langchain-ai/agent-chat-ui)):
+sign in as a rep (demo users in `.env`: `AUTH_USERS=jane:<password>:3,...`). `POST /auth/login`
+returns a signed token with the rep inside; every request sends it as `Authorization: Bearer`, the
+server tags each thread with its owner and only returns a rep's own threads (`auth.py`), and
+`RepContextMiddleware` takes `rep_id` from the token. To switch rep, sign out and in again.
+Approval pauses render as a card with approve / edit / reject.
 
 ```bash
-python scripts/create_assistants.py     # with ./start.sh running; prints three assistant ids
+cd ui && cp .env.example .env && npx pnpm@10.5.1 install && npx pnpm@10.5.1 dev   # with ./start.sh running -> http://localhost:3000
 ```
 
-Deployment URL `http://localhost:2024`, Assistant / Graph ID = the id printed for Jane. Using
-the bare graph id `sales_assistant` fails closed (`PermissionError`: no rep signed in), by design.
+**Deploying the UI with the agent.** `langgraph.json` registers `webapp.py` as the Agent Server's
+custom HTTP app, which serves a static build of the UI at `/app/` on the same server as the API
+(mounted under a prefix because custom routes take precedence over the built-in ones). Build it
+before `langgraph build` / deploying, and commit `ui/out` if the deployment builds from GitHub:
+
+```bash
+cd ui && npx pnpm@10.5.1 build:static        # -> ui/out, served at <deployment-url>/app/
+```
+
+On first load the UI asks for the deployment URL (prefilled with the page's origin; leave the API
+key empty), then shows the login page. The page itself is public; every API call needs a token.
+Locally, `./start.sh` also serves it at http://localhost:2024/app/ once `ui/out` exists.
+
+Studio is unaffected by the login: it connects with its own LangSmith scheme, sees every thread
+and keeps using the run context. With login on, the hosted Agent Chat UI and other clients need a
+token (`POST /auth/login`), sent as `Authorization: Bearer <token>`.
 
 Prompts to try:
 
