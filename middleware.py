@@ -8,7 +8,9 @@ LangChain v1 middleware hooks, in the order they fire inside the agent loop:
 Two custom pieces live here; the built-ins (memory, PII, fallback, call limits, human-in-
 the-loop, summarization, todos, filesystem, skills, subagents) are configured in agent.py.
 
-1. ``RepContextMiddleware``   before_agent: identity check, fails closed.
+1. ``RepContextMiddleware``   before_agent: identity check, fails closed. The rep comes from
+                              the signed-in user (auth.py) when there is one, else from the
+                              run context (Studio, evals, scripts); a mismatch is refused.
                               wrap_model_call: context engineering, a small per-user
                               section appended to the system prompt (name, territory, date).
 2. ``AuditTrailMiddleware``   wrap_tool_call: every side-effecting tool call (payments,
@@ -33,9 +35,32 @@ from tools.ledger import audit
 from tools.sql import query, query_one
 
 
+def _auth_rep_id(runtime: Any) -> int | None:
+    """The rep of the user who signed in to the Agent Server (auth.py), if any. Studio's user and
+    in-process callers (evals, scripts/chat.py, tests) have none."""
+    user = getattr(getattr(runtime, "server_info", None), "user", None)
+    if user is None:
+        return None
+    rep_id = getattr(user, "rep_id", None)
+    if rep_id is None:
+        try:
+            rep_id = user["rep_id"]
+        except (KeyError, TypeError):
+            return None
+    return rep_id if isinstance(rep_id, int) else None
+
+
 def _rep_id(runtime: Runtime[Context] | None) -> int | None:
+    """Who the run is for. A signed-in user's rep wins; asking for a different rep is refused,
+    so a client can't act as someone else by editing the run context."""
     ctx = getattr(runtime, "context", None)
-    return getattr(ctx, "rep_id", None) if ctx is not None else None
+    context_rep = getattr(ctx, "rep_id", None) if ctx is not None else None
+    auth_rep = _auth_rep_id(runtime)
+    if auth_rep is None:
+        return context_rep
+    if context_rep is not None and context_rep != auth_rep:
+        raise PermissionError(f"Signed in as rep {auth_rep}; the run asked for rep {context_rep}: access denied.")
+    return auth_rep
 
 
 @cache
@@ -67,7 +92,9 @@ class RepContextMiddleware(AgentMiddleware):
     def _verify(self, runtime: Runtime[Context]) -> None:
         rep_id = _rep_id(runtime)
         if rep_id is None:
-            raise PermissionError('No rep_id in the run context. In Studio, set context to {"rep_id": 3} (Jane Peacock).')
+            raise PermissionError(
+                'No signed-in rep. Sign in to the chat UI, or in Studio set context to {"rep_id": 3} (Jane Peacock).'
+            )
         if rep_profile(rep_id) is None:
             raise PermissionError(f"Unknown rep_id {rep_id}: access denied.")
 

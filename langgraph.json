@@ -1,7 +1,15 @@
 {
-  "dependencies": ["."],
+  "dependencies": [
+    "."
+  ],
   "graphs": {
     "sales_assistant": "./agent.py:make_graph"
+  },
+  "auth": {
+    "path": "./auth.py:auth"
+  },
+  "http": {
+    "app": "./webapp.py:app"
   },
   "env": ".env"
 }

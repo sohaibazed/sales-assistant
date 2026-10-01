@@ -83,7 +83,7 @@ PERMISSIONS = [
     FilesystemPermission(
         operations=["read", "write"],
         paths=["/.env", "/.env.*", "/.git/**", "/.venv/**", "/.langgraph_api/**", "/.pytest_cache/**", "/data/**",
-               "/**/__pycache__/**", "/**/*.sqlite"],
+               "/**/__pycache__/**", "/**/*.sqlite", "/ui/**"],
         mode="deny",
     ),
     # The only writable places: deliverables and the operating manual (the memory file).

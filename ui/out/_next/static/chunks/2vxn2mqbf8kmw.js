@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,150003,t=>{"use strict";function a(t){t.languages.hsts={directive:{pattern:/\b(?:includeSubDomains|max-age|preload)(?=[\s;=]|$)/i,alias:"property"},operator:/=/,punctuation:/;/}}a.displayName="hsts",a.aliases=[],t.s(["default",0,a])}]);
