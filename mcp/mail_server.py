@@ -23,6 +23,7 @@ import os
 import shlex
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 HOST = os.getenv("MAIL_MCP_HOST", "127.0.0.1")
@@ -252,6 +253,8 @@ def reset_mailbox() -> str:
 
 
 if __name__ == "__main__":
+    load_dotenv()
+    os.environ["LANGSMITH_PROJECT"] = os.getenv("LANGSMITH_MCP_PROJECT", "sales-assistant-mcp-dev")
     parser = argparse.ArgumentParser(description="Fake mail MCP server for the sales assistant demo")
     parser.add_argument("--transport", choices=["streamable-http", "stdio"], default="streamable-http")
     args = parser.parse_args()

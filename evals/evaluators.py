@@ -21,6 +21,8 @@ import sys
 from functools import cache
 from pathlib import Path
 
+from langsmith import tracing_context
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from config import JUDGE_MODEL  # noqa: E402
@@ -253,19 +255,21 @@ def _with_deliverables(outputs: dict, limit: int = 4000) -> str:
 
 
 def correctness(inputs: dict, outputs: dict, reference_outputs: dict) -> dict:
-    return _correctness_judge()(
-        inputs=f"{app_context(inputs['rep_id'])}\n\nUser request: {inputs['question']}",
-        outputs=_with_deliverables(outputs),
-        reference_outputs=reference_outputs["answer"],
-    )
+    with tracing_context(project_name=os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")):
+        return _correctness_judge()(
+            inputs=f"{app_context(inputs['rep_id'])}\n\nUser request: {inputs['question']}",
+            outputs=_with_deliverables(outputs),
+            reference_outputs=reference_outputs["answer"],
+        )
 
 
 def groundedness(inputs: dict, outputs: dict) -> dict:
-    return _groundedness_judge()(
-        inputs=f"{app_context(inputs['rep_id'])}\n\nUser request: {inputs['question']}",
-        context="\n".join(outputs.get("tool_results", [])) or "(no tools were called)",
-        outputs=outputs.get("answer", ""),
-    )
+    with tracing_context(project_name=os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")):
+        return _groundedness_judge()(
+            inputs=f"{app_context(inputs['rep_id'])}\n\nUser request: {inputs['question']}",
+            context="\n".join(outputs.get("tool_results", [])) or "(no tools were called)",
+            outputs=outputs.get("answer", ""),
+        )
 
 
 # ── 3. Trajectory judge (openevals), for workflows and gated actions ──────────
@@ -291,7 +295,8 @@ def trajectory_quality(inputs: dict, outputs: dict, reference_outputs: dict) -> 
                             "function": {"name": call["name"], "arguments": json.dumps(call["args"], default=str)}}],
         })
     trajectory.append({"role": "assistant", "content": outputs.get("answer", "")})
-    return _trajectory_judge()(outputs=trajectory)
+    with tracing_context(project_name=os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")):
+        return _trajectory_judge()(outputs=trajectory)
 
 
 LLM_EVALUATORS = [correctness, groundedness, trajectory_quality]
