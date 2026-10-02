@@ -15,12 +15,18 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import tempfile
 import time
 import uuid
 from pathlib import Path
 from typing import Any, Callable
+
+from dotenv import load_dotenv
+
+load_dotenv()
+os.environ["LANGSMITH_PROJECT"] = os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

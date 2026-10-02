@@ -10,9 +10,14 @@ turn 3. A simulated user with a goal and a persona can (openevals simulators).
 from __future__ import annotations
 
 import asyncio
+import os
 import uuid
 
 from dotenv import load_dotenv
+
+load_dotenv()
+os.environ["LANGSMITH_PROJECT"] = os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")
+
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
@@ -65,7 +70,6 @@ async def make_app():
 
 
 def main() -> None:
-    load_dotenv()
     app = asyncio.run(make_app())
 
     def sync_app(inputs: dict, *, thread_id: str, **kwargs) -> dict:
