@@ -162,6 +162,19 @@ def test_refund_is_validated_in_code_even_after_approval():
     assert ledger.refunds_for_invoice(98) == []
 
 
+def test_analyst_refund_lookup_reports_ledger_refunds_and_empty_invoices():
+    agent = _refund_agent(amount=1.99)
+    _, cfg = run(ask(agent, "Refund invoice 98"))
+    run(resume(agent, cfg, {"type": "approve"}))
+
+    reported = ledger.refunds_for_invoice_tool.invoke({"invoice_id": 98})
+    assert "#1" in reported and "$1.99" in reported and "Total already refunded: $1.99" in reported
+    assert "Episodes won't play" in reported and "issued_at:" in reported
+    assert ledger.refunds_for_invoice_tool.invoke({"invoice_id": 99}) == (
+        "No refunds found for invoice #99. Total already refunded: $0.00."
+    )
+
+
 # ── Human-in-the-loop: payments pause only when there is something to decide ──
 def _pay_agent(invoice, vendor, amount, po):
     main = scripted(

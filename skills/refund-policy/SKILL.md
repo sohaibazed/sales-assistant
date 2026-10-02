@@ -22,12 +22,15 @@ customer an outcome.
    report the sender, invoice number, what went wrong and the amount requested. If the
    rep asked directly, use what they gave you; ask for the invoice number if missing.
 2. **Verify the invoice** with **chinook-analyst**: the invoice exists, belongs to the
-   customer with that email, its date, total, and line items. If it isn't theirs or doesn't
-   exist, stop: reply that you can't find it and ask for the invoice number on their receipt.
-   Don't stop over wording: customers say "track", "song", "episode" or "video" loosely. If
-   the invoice is theirs and the reason qualifies, go to step 4; the reviewer is the check.
-3. **Apply the policy.** If the reason doesn't qualify, do NOT call issue_refund. Draft a
-   polite decline that cites the policy line (send_email pauses for review) and stop.
+   customer with that email, its date, total, line items, and the amount already refunded,
+   taken from the ledger lookup. If it isn't theirs or doesn't exist, stop: reply that you
+   can't find it and ask for the invoice number on their receipt. Don't stop over wording:
+   customers say "track", "song", "episode" or "video" loosely. If the invoice is theirs
+   and the reason qualifies, continue.
+3. **Apply the policy.** If the reason doesn't qualify, do NOT call issue_refund. Calculate
+   the remaining refundable amount as the invoice total minus the amount already refunded.
+   If nothing remains, politely decline without calling issue_refund. If the requested amount
+   exceeds what remains, cap it to the remaining amount or politely decline.
 4. **Issue it.** Call issue_refund(invoice_id, amount, reason) with the amount capped at the
    invoice total (partial when only some items are affected) and the reason in one
    sentence. The call pauses for a person; that pause is the approval.
