@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 from datetime import datetime, timezone
 
 from mcp.server.fastmcp import FastMCP
@@ -189,11 +190,16 @@ def read_email(email_id: str) -> str:
 
 @mcp.tool()
 def search_inbox(query: str) -> str:
-    """Search subject, sender and body for a word or phrase (case-insensitive). Returns matching ids and subjects."""
-    q = query.lower().strip()
-    hits = [e for e in INBOX if q in e["subject"].lower() or q in e["body"].lower() or q in e["from"].lower()]
+    """Search subject, sender and body for keywords (case-insensitive). A message matches if it
+    contains ANY of the words; quoted phrases are kept together. Returns matching ids and subjects."""
+    try:
+        words = shlex.split(query.replace("'", " "))
+    except ValueError:  # unbalanced quote
+        words = query.replace('"', " ").split()
+    terms = [w.lower() for w in words if w.upper() not in ("OR", "AND")] or [query.lower().strip()]
+    hits = [e for e in INBOX if any(t in f"{e['subject']} {e['body']} {e['from']}".lower() for t in terms)]
     if not hits:
-        return f"No messages match {query!r}."
+        return f"No messages match {query!r}. To see everything, use list_inbox."
     return "\n".join(f"{e['id']} | {e['date']} | {e['from']} | {e['subject']}" for e in hits)
 
 
