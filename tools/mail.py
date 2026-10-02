@@ -15,13 +15,17 @@ MCP tools are async, so the agent is invoked with ``ainvoke`` / ``astream`` (whi
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import logging
+import os
+import socket
 import threading
+from urllib.parse import urlparse
 
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
-from config import MAIL_MCP_URL
+from config import MAIL_MCP_URL, REPO_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +74,47 @@ def discover_mail_tools_sync(*, refresh: bool = False) -> list[BaseTool]:
     t.start()
     t.join()
     return result
+
+
+_embedded: threading.Thread | None = None
+
+
+def _port_open(host: str, port: int) -> bool:
+    with socket.socket() as s:
+        s.settimeout(0.2)
+        return s.connect_ex((host, port)) == 0
+
+
+async def start_embedded_mail_server(timeout: float = 10.0) -> bool:
+    """Run mcp/mail_server.py in a background thread of this process, on MAIL_MCP_URL's port.
+
+    For LangSmith Deployment, where start.sh doesn't run: only the Agent Server starts, so the
+    graph factory brings the mail server up itself. It still speaks MCP over HTTP on
+    127.0.0.1, so it's reachable only inside the container. Only for a local URL, and not
+    when MAIL_MCP_EMBED=0. Returns True once the port accepts connections.
+    """
+    global _embedded
+    url = urlparse(MAIL_MCP_URL)
+    host, port = url.hostname or "127.0.0.1", url.port or 80
+    if host not in ("127.0.0.1", "localhost") or os.getenv("MAIL_MCP_EMBED", "1") == "0":
+        return False
+    if _embedded is None or not _embedded.is_alive():
+        import uvicorn
+
+        # mcp/ has no __init__.py (it would shadow the mcp package), so load the file by path.
+        spec = importlib.util.spec_from_file_location("chinook_mail_server", REPO_ROOT / "mcp" / "mail_server.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        server = uvicorn.Server(uvicorn.Config(module.mcp.streamable_http_app(), host=host, port=port, log_level="warning"))
+        _embedded = threading.Thread(target=server.run, name="chinook-mail", daemon=True)
+        _embedded.start()
+        logger.info("Started the embedded mail MCP server at %s", MAIL_MCP_URL)
+    for _ in range(int(timeout / 0.1)):
+        if _port_open(host, port):
+            return True
+        await asyncio.sleep(0.1)
+    logger.warning("Embedded mail MCP server did not come up at %s", MAIL_MCP_URL)
+    return False
 
 
 def split_mail_tools(tools: list[BaseTool]) -> tuple[list[BaseTool], list[BaseTool]]:

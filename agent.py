@@ -45,7 +45,7 @@ from subagents import build_subagents
 from tools.chart import CHART_TOOLS
 from tools.html import HTML_TOOLS
 from tools.ledger import ACTION_TOOLS, payment_needs_review
-from tools.mail import discover_mail_tools, split_mail_tools
+from tools.mail import discover_mail_tools, split_mail_tools, start_embedded_mail_server
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +191,8 @@ async def make_graph(config: dict | None = None):
     if _graph_cache is not None:
         return _graph_cache
     tools = await discover_mail_tools()
+    if not tools and await start_embedded_mail_server():  # deployed: no start.sh, so start it here
+        tools = await discover_mail_tools()
     graph = build_agent(mail_tools=tools)
     if tools:
         _graph_cache = graph
