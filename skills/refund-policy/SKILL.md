@@ -24,6 +24,8 @@ customer an outcome.
 2. **Verify the invoice** with **chinook-analyst**: the invoice exists, belongs to the
    customer with that email, its date, total, and line items. If it isn't theirs or doesn't
    exist, stop: reply that you can't find it and ask for the invoice number on their receipt.
+   Don't stop over wording: customers say "track", "song", "episode" or "video" loosely. If
+   the invoice is theirs and the reason qualifies, go to step 4; the reviewer is the check.
 3. **Apply the policy.** If the reason doesn't qualify, do NOT call issue_refund. Draft a
    polite decline that cites the policy line (send_email pauses for review) and stop.
 4. **Issue it.** Call issue_refund(invoice_id, amount, reason) with the amount capped at the

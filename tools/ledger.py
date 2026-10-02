@@ -85,9 +85,9 @@ def _conn() -> sqlite3.Connection:
     conn.executescript(_SCHEMA)
     if conn.execute("SELECT COUNT(*) FROM purchase_orders").fetchone()[0] == 0:
         conn.executemany(
-            "INSERT INTO purchase_orders (po_number, vendor, amount, description) VALUES (?, ?, ?, ?)", PURCHASE_ORDERS
+            "INSERT OR IGNORE INTO purchase_orders (po_number, vendor, amount, description) VALUES (?, ?, ?, ?)", PURCHASE_ORDERS
         )
-        conn.executemany("INSERT INTO vendors (name, bank_account_last4, email_domain) VALUES (?, ?, ?)", VENDORS)
+        conn.executemany("INSERT OR IGNORE INTO vendors (name, bank_account_last4, email_domain) VALUES (?, ?, ?)", VENDORS)
         conn.commit()
     return conn
 
@@ -243,7 +243,8 @@ def pay_invoice(invoice_number: str, vendor: str, amount: float, po_number: str,
         if po["remaining"] - float(amount) < 0.005:
             conn.execute("UPDATE purchase_orders SET status = 'closed' WHERE po_number = ?", (po["po_number"],))
         conn.commit()
-        return f"Paid: payment #{cur.lastrowid}, {invoice_number} from {po['vendor']} for ${amount:,.2f} against {po['po_number']}."
+        approved = " after reviewer approval" if float(amount) >= PAY_APPROVAL_THRESHOLD else " (below the approval threshold, no review needed)"
+        return f"Paid{approved}: payment #{cur.lastrowid}, {invoice_number} from {po['vendor']} for ${amount:,.2f} against {po['po_number']}."
     finally:
         conn.close()
 

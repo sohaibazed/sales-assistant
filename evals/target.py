@@ -28,11 +28,12 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage  # noqa
 from langgraph.checkpoint.memory import InMemorySaver  # noqa: E402
 from langgraph.types import Command  # noqa: E402
 
-from config import OUTPUT_DIR, Context  # noqa: E402
+from config import OUTPUT_DIR, REPO_ROOT, Context  # noqa: E402
 from tools import ledger  # noqa: E402
 from tools.mail import discover_mail_tools, reset_mailbox  # noqa: E402
 
 MAX_APPROVALS = 4
+MANUAL = REPO_ROOT / "AGENTS.md"
 
 
 def _text(msg: Any) -> str:
@@ -44,12 +45,19 @@ async def run_example(build: Callable[..., Any], mail_tools: list, context: Cont
     """Run one example in isolation and collect everything the evaluators look at."""
     await reset_mailbox(mail_tools)
     started = time.time()
-    with ledger.isolated_ledger(Path(tempfile.gettempdir()) / f"sales-assistant-ledger-{uuid.uuid4()}.sqlite"):
-        result = await _run(build(mail_tools=mail_tools, checkpointer=InMemorySaver()), context, question)
-        result["ledger"] = {
-            "payments": [p["invoice_number"] for p in ledger.payments()],
-            "refunds": [r["invoice_id"] for r in ledger.refunds_for_invoice_any()],
-        }
+    manual = MANUAL.read_text()  # AGENTS.md is shared state too: an edit must not leak into later examples
+    try:
+        with ledger.isolated_ledger(Path(tempfile.gettempdir()) / f"sales-assistant-ledger-{uuid.uuid4()}.sqlite"):
+            result = await _run(build(mail_tools=mail_tools, checkpointer=InMemorySaver()), context, question)
+            result["ledger"] = {
+                "payments": [p["invoice_number"] for p in ledger.payments()],
+                "refunds": [r["invoice_id"] for r in ledger.refunds_for_invoice_any()],
+            }
+    finally:
+        result_manual = MANUAL.read_text()
+        if result_manual != manual:
+            MANUAL.write_text(manual)
+    result["memory_edited"] = result_manual != manual
     result["deliverables"] = {
         p.name: (p.read_text(errors="replace") if p.suffix == ".html" else f"<{p.stat().st_size} bytes>")
         for p in OUTPUT_DIR.glob("*")

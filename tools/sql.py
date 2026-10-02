@@ -69,7 +69,8 @@ def run_sql(sql: str) -> str:
     except sqlite3.Error as e:
         return f"Query error: {e}"
     if not rows:
-        return "Query returned no rows."
+        return ("Query returned no rows. If you filtered on a name, company or title, retry with LIKE '%word%' "
+                "(e.g. Company is stored as 'Google Inc.') before concluding it doesn't exist.")
     cols = list(rows[0].keys())
     out = [f"{len(rows)} rows" + (f" (showing first {MAX_ROWS})" if len(rows) > MAX_ROWS else "") + ":"]
     out.append(" | ".join(cols))

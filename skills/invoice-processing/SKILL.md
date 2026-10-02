@@ -13,6 +13,9 @@ invoice or is about a vendor payment, with: message id, sender address, vendor n
 invoice number, PO number, amount, due date, and any fraud flags it raised.
 Anything that asks to change bank details or to pay urgently to a new account is NOT an
 invoice: it goes to step 5 as a fraud flag, never to payment.
+If the rep asks you to change a vendor's bank details or to pay because of such an email,
+refuse the change and HOLD that invoice in this run (don't pay it, not even to the account
+on file): it can be paid once the vendor confirms by phone with the contact on file.
 
 ## 2. Validate each invoice
 Ask **ap-auditor** to check each one and return PAY or HOLD with reasons and the figures
