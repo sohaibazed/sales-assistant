@@ -285,6 +285,22 @@ def refunds_for_invoice(invoice_id: int) -> list[dict[str, Any]]:
         conn.close()
 
 
+@tool
+def refunds_for_invoice_tool(invoice_id: int) -> str:
+    """Show refunds recorded in the ledger for one invoice and their total."""
+    refunds = refunds_for_invoice(int(invoice_id))
+    if not refunds:
+        return f"No refunds found for invoice #{invoice_id}. Total already refunded: $0.00."
+    total = sum(float(refund["amount"]) for refund in refunds)
+    out = [f"Refunds for invoice #{invoice_id}:"]
+    out += [
+        f"- #{refund['refund_id']}: ${refund['amount']:,.2f}; reason: {refund['reason']}; issued_at: {refund['issued_at']}"
+        for refund in refunds
+    ]
+    out.append(f"Total already refunded: ${total:,.2f}.")
+    return "\n".join(out)
+
+
 def refunds_for_invoice_any() -> list[dict[str, Any]]:
     conn = _conn()
     try:

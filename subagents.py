@@ -21,7 +21,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
 from config import SUBAGENT_MODEL
-from tools.ledger import AP_LOOKUP_TOOLS
+from tools.ledger import AP_LOOKUP_TOOLS, refunds_for_invoice_tool
 from tools.search import SEARCH_TOOLS
 from tools.sql import SQL_TOOLS
 
@@ -33,6 +33,8 @@ sales, customers, reps, invoices and the catalog with read-only SQL over the Chi
   2021-2025; "last year" means 2025 unless told otherwise. Prices are per track (UnitPrice).
 - Aggregate in SQL (GROUP BY, SUM, COUNT, ORDER BY, LIMIT). Results are capped at 50 rows.
 - A rep's territory is the set of customers whose SupportRepId equals the rep's EmployeeId.
+- Refunds are recorded in the ledger, not in the Chinook DB: use refunds_for_invoice_tool to
+  check prior refunds; never infer refund status from Invoice.Total or any other Chinook column.
 - Return exact figures with 2 decimals for money, the SQL you ran, and nothing you didn't
   compute. If a question can't be answered from the data, say so.
 """
@@ -89,7 +91,7 @@ def build_subagents(model: str | BaseChatModel | None = None, mail_read_tools: S
                 "country/genre/rep/period, a customer's account and invoices, top tracks, catalog prices."
             ),
             "system_prompt": CHINOOK_ANALYST_PROMPT,
-            "tools": SQL_TOOLS,
+            "tools": [*SQL_TOOLS, refunds_for_invoice_tool],
             "model": model,
             "middleware": limit,
         },
