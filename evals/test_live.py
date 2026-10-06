@@ -12,6 +12,11 @@ from __future__ import annotations
 import asyncio
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+os.environ["LANGSMITH_PROJECT"] = os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")
+
 import pytest
 from langsmith import testing as t
 

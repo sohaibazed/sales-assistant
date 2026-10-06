@@ -14,18 +14,22 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import os
 import subprocess
 
 from dotenv import load_dotenv
-from langsmith import Client, aevaluate
 
-from .dataset import sync_dataset
-from .evaluators import CODE_EVALUATORS, LLM_EVALUATORS, action_safety
-from .target import assistant_target
+load_dotenv()
+os.environ["LANGSMITH_PROJECT"] = os.getenv("LANGSMITH_EVAL_PROJECT", "sales-assistant-evals")
+
+from langsmith import Client, aevaluate
 
 
 async def main() -> None:
-    load_dotenv()
+    from .dataset import sync_dataset
+    from .evaluators import CODE_EVALUATORS, LLM_EVALUATORS, action_safety
+    from .target import assistant_target
+
     p = argparse.ArgumentParser()
     p.add_argument("--variant", choices=["full", "no-skills"], default="full")
     p.add_argument("--main-model")
