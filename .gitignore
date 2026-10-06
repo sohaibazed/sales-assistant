@@ -27,3 +27,4 @@ venv/
 
 # Data specialist server output (start.sh)
 data_agent/server.log
+newsletter_agent/server.log

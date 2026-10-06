@@ -20,7 +20,13 @@ from langchain.agents.middleware import ModelCallLimitMiddleware, PIIMiddleware
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
-from config import DATA_AGENT_GRAPH_ID, DATA_AGENT_URL, SUBAGENT_MODEL
+from config import (
+    DATA_AGENT_GRAPH_ID,
+    DATA_AGENT_URL,
+    NEWSLETTER_AGENT_GRAPH_ID,
+    NEWSLETTER_AGENT_URL,
+    SUBAGENT_MODEL,
+)
 from tools.ledger import AP_LOOKUP_TOOLS
 from tools.search import SEARCH_TOOLS
 from tools.sql import SQL_TOOLS
@@ -141,6 +147,19 @@ def build_subagents(
                 "description": "Tabular analysis with pandas on CSV data you pass it: shape, column types, summary statistics.",
                 "graph_id": DATA_AGENT_GRAPH_ID,
                 "url": DATA_AGENT_URL,
+            }
+        )
+    # Long-running writer on its own server: started in the background, checked on request.
+    if NEWSLETTER_AGENT_URL:
+        specs.append(
+            {
+                "name": "newsletter-writer",
+                "description": (
+                    "Writes the weekly customer newsletter end to end in the background (sales numbers, "
+                    "outside context, HTML file in /output/). Give it the focus genre and period."
+                ),
+                "graph_id": NEWSLETTER_AGENT_GRAPH_ID,
+                "url": NEWSLETTER_AGENT_URL,
             }
         )
     return specs

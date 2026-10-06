@@ -5,6 +5,13 @@ description: "Write the weekly customer newsletter as a one-page HTML file: top 
 
 # Weekly newsletter
 
+## 0. Delegate it if the newsletter-writer is available
+If start_async_task lists `newsletter-writer`, start it with the focus genre and period
+(section 1), tell the rep the task id and that the file will land in /output/, and stop.
+The rep can keep working meanwhile. Check it with check_async_task only when the rep asks;
+then report the file path and the headline facts it returned. Otherwise, do sections 1-5
+yourself.
+
 ## 1. Scope
 - Focus genre: whatever the rep (or Nancy's email) asked for. No focus given -> whole store.
 - Period: the most recent full year in the data (2025) unless told otherwise. Say which

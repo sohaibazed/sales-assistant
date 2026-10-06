@@ -39,6 +39,10 @@ MAIL_MCP_URL = os.getenv("MAIL_MCP_URL", "http://127.0.0.1:8765/mcp")
 # The pandas data specialist (data_agent/) runs as its own deployment; unset = not wired in.
 DATA_AGENT_URL = os.getenv("DATA_AGENT_URL", "")
 DATA_AGENT_GRAPH_ID = os.getenv("DATA_AGENT_GRAPH_ID", "data_agent")
+# The newsletter writer (newsletter_agent/) runs on its own Agent Server; unset = the main
+# agent writes the newsletter itself with the weekly-newsletter skill.
+NEWSLETTER_AGENT_URL = os.getenv("NEWSLETTER_AGENT_URL", "")
+NEWSLETTER_AGENT_GRAPH_ID = os.getenv("NEWSLETTER_AGENT_GRAPH_ID", "newsletter_agent")
 # Vendor invoices at or above this amount pause for a human before payment.
 PAY_APPROVAL_THRESHOLD = float(os.getenv("PAY_APPROVAL_THRESHOLD", "1000"))
 

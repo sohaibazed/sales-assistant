@@ -75,6 +75,17 @@ def test_skills_can_be_switched_off_for_ab_experiments():
     assert "Available Skills" not in main.prompts[0][0].text  # the harness section is gone
 
 
+def test_newsletter_writer_is_an_async_subagent_only_when_its_server_is_configured(monkeypatch):
+    import subagents
+
+    monkeypatch.setattr(subagents, "NEWSLETTER_AGENT_URL", "")
+    assert "newsletter-writer" not in {s["name"] for s in subagents.build_subagents("openai:gpt-4.1-mini")}
+
+    monkeypatch.setattr(subagents, "NEWSLETTER_AGENT_URL", "http://127.0.0.1:2026")
+    spec = {s["name"]: s for s in subagents.build_subagents("openai:gpt-4.1-mini")}["newsletter-writer"]
+    assert spec["graph_id"] == "newsletter_agent" and spec["url"] == "http://127.0.0.1:2026"
+
+
 # ── Filesystem: the repo is the agent's disk, with rules ──────────────────────
 def test_secrets_and_code_are_protected():
     main = scripted(
