@@ -11,6 +11,7 @@ if [[ "${1:-}" == "--reset" ]]; then
   rm -rf .langgraph_api
   git checkout -- AGENTS.md 2>/dev/null || true   # forget anything the agent learned during rehearsal
   echo "Reset: ledger, Studio threads and AGENTS.md."
+  shift   # don't forward --reset to `langgraph dev`
 fi
 
 if [[ ! -f .env ]]; then
