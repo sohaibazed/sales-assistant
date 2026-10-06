@@ -24,3 +24,6 @@ venv/
 .DS_Store
 .dockerignore
 *.swp
+
+# Data specialist server output (start.sh)
+data_agent/server.log

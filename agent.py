@@ -82,8 +82,9 @@ PERMISSIONS = [
     # Secrets, git internals, databases and caches are invisible: not readable, listable or greppable.
     FilesystemPermission(
         operations=["read", "write"],
-        paths=["/.env", "/.env.*", "/.git/**", "/.venv/**", "/.langgraph_api/**", "/.pytest_cache/**", "/data/**",
-               "/**/__pycache__/**", "/**/*.sqlite", "/ui/**"],
+        # /**/ also covers nested projects such as data_agent/ (its .env, .venv and server state).
+        paths=["/**/.env", "/**/.env.*", "/.git/**", "/**/.venv/**", "/**/.langgraph_api/**", "/.pytest_cache/**",
+               "/data/**", "/**/__pycache__/**", "/**/*.sqlite", "/ui/**"],
         mode="deny",
     ),
     # The only writable places: deliverables and the operating manual (the memory file).

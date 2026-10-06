@@ -15,12 +15,12 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from deepagents import SubAgent
+from deepagents import AsyncSubAgent, SubAgent
 from langchain.agents.middleware import ModelCallLimitMiddleware, PIIMiddleware
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool
 
-from config import SUBAGENT_MODEL
+from config import DATA_AGENT_GRAPH_ID, DATA_AGENT_URL, SUBAGENT_MODEL
 from tools.ledger import AP_LOOKUP_TOOLS
 from tools.search import SEARCH_TOOLS
 from tools.sql import SQL_TOOLS
@@ -78,10 +78,12 @@ them; you cannot pay anything yourself.
 """
 
 
-def build_subagents(model: str | BaseChatModel | None = None, mail_read_tools: Sequence[BaseTool] = ()) -> list[SubAgent]:
+def build_subagents(
+    model: str | BaseChatModel | None = None, mail_read_tools: Sequence[BaseTool] = ()
+) -> list[SubAgent | AsyncSubAgent]:
     model = model or SUBAGENT_MODEL
     limit = [ModelCallLimitMiddleware(run_limit=15, exit_behavior="end")]
-    return [
+    specs: list[SubAgent | AsyncSubAgent] = [
         {
             "name": "chinook-analyst",
             "description": (
@@ -131,3 +133,14 @@ def build_subagents(model: str | BaseChatModel | None = None, mail_read_tools: S
             "middleware": limit,
         },
     ]
+    # Remote specialist with its own dependencies (pandas); see data_agent/.
+    if DATA_AGENT_URL:
+        specs.append(
+            {
+                "name": "data-analyst",
+                "description": "Tabular analysis with pandas on CSV data you pass it: shape, column types, summary statistics.",
+                "graph_id": DATA_AGENT_GRAPH_ID,
+                "url": DATA_AGENT_URL,
+            }
+        )
+    return specs

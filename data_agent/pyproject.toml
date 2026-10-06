@@ -1,0 +1,21 @@
+[project]
+name = "data-agent"
+version = "0.1.0"
+description = "Pandas data specialist for the Chinook sales assistant, deployed as its own graph"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain>=1.4",
+    "langgraph>=1.2",
+    "langchain-openai",
+    "langchain-anthropic",
+    "pandas>=2.2",
+    "langgraph-cli[inmem]",
+    "python-dotenv",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["agent"]

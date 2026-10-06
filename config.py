@@ -36,6 +36,9 @@ JUDGE_MODEL = os.getenv("JUDGE_MODEL") or ("openai:gpt-5.5" if _HAS_OPENAI else 
 
 # ── Integrations ──────────────────────────────────────────────────────────────
 MAIL_MCP_URL = os.getenv("MAIL_MCP_URL", "http://127.0.0.1:8765/mcp")
+# The pandas data specialist (data_agent/) runs as its own deployment; unset = not wired in.
+DATA_AGENT_URL = os.getenv("DATA_AGENT_URL", "")
+DATA_AGENT_GRAPH_ID = os.getenv("DATA_AGENT_GRAPH_ID", "data_agent")
 # Vendor invoices at or above this amount pause for a human before payment.
 PAY_APPROVAL_THRESHOLD = float(os.getenv("PAY_APPROVAL_THRESHOLD", "1000"))
 
