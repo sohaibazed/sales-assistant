@@ -41,6 +41,7 @@ from langchain_core.tools import BaseTool
 
 from config import FALLBACK_MODEL, MAIN_MODEL, PAY_APPROVAL_THRESHOLD, REPO_ROOT, Context, provider_of
 from middleware import AuditTrailMiddleware, RepContextMiddleware
+from pii import detect_credit_cards
 from subagents import build_subagents
 from tools.chart import CHART_TOOLS
 from tools.html import HTML_TOOLS
@@ -154,7 +155,13 @@ def build_agent(
         RepContextMiddleware(),
         # Card numbers are masked in user input AND in tool results (the inbox-clerk has the
         # same rule), so a card pasted into an email (E-1008) never reaches a model or a trace.
-        PIIMiddleware("credit_card", strategy="mask", apply_to_input=True, apply_to_tool_results=True),
+        PIIMiddleware(
+            "credit_card",
+            strategy="mask",
+            detector=detect_credit_cards,
+            apply_to_input=True,
+            apply_to_tool_results=True,
+        ),
         AuditTrailMiddleware(),
         ModelFallbackMiddleware(FALLBACK_MODEL),
         ModelCallLimitMiddleware(run_limit=30, exit_behavior="end"),
